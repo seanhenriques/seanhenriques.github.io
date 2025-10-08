@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap" rel="stylesheet">
+        <title>PsychLab | Participant ID Tool</title>
+        <style type="text/css">
+            body{
+                margin:40px auto;
+                max-width: 650px;
+                line-height: 1.6;
+                font-size: 16px;
+                color: #444;
+                padding: 0 10px;
+                font-family: 'Spectral', serif;
+            }
+            .cap {
+                font-size: 20px;
+            }
+            .mg{
+                margin-top: -5px;
+                margin-bottom: 5px;
+            }
+            h1, h2, h3 {
+                line-height:1.2;
+            }
+            aside {
+                margin-top: -15px;
+            }
+            a:link, a:visited {
+                color: #3353b1;
+                background-color: transparent;
+                text-decoration: none;
+            }
+            a:hover, a:active {
+                color: #3353b1;
+                background-color: transparent;
+                text-decoration: underline;
+            }
+            i {
+                color: rgba(37, 37, 37, 0.76);
+            }
+            img {
+                width: 100%;
+            }
+            button {
+                background-color: #3353b1;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 5px;
+                cursor: pointer;
+                transition: background-color 0.2s ease;
+            }
+            button:hover {
+                background-color: #2a4590;
+            }
+            input[type="text"] {
+                padding: 8px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                width: 100%;
+                box-sizing: border-box;
+                margin-bottom: 10px;
+            }
+            #output {
+                margin-top: 20px;
+                padding: 15px;
+                border-left: 5px solid #3353b1;
+                background-color: #f7f9fc;
+            }
+        </style>
+        <script>
+            /**
+             * Converts a string into a SHA-256 hexadecimal hash using the 
+             * browser's native Web Crypto API. This function is asynchronous.
+             * @param {string} message The string to hash.
+             * @returns {Promise<string>} The SHA-256 hash as a hex string.
+             */
+            async function sha256(message) {
+                // 1. Convert the string message to an ArrayBuffer (Uint8Array)
+                const msgUint8 = new TextEncoder().encode(message); 
+                
+                // 2. Hash the message asynchronously using SHA-256
+                const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8); 
+                
+                // 3. Convert the ArrayBuffer hash to a standard Array of bytes
+                const hashArray = Array.from(new Uint8Array(hashBuffer)); 
+                
+                // 4. Convert bytes to a hexadecimal string
+                const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join(''); 
+                
+                return hashHex;
+            }
+
+            /**
+             * Handles form submission, combines inputs, hashes the result,
+             * and displays it in the output element.
+             */
+            async function displayResult() {
+                // 1. Get the values from the input fields
+                const input1 = document.getElementById('question-1');
+                const input2 = document.getElementById('question-2');
+                const answer = input1.value + input2.value;
+
+                // 2. Get the output element (the <p> tag) with the ID 'output'
+                const outputElement = document.getElementById('output');
+
+                if (answer.trim() !== "") {
+                    // Show a temporary message while hashing is in progress
+                    outputElement.innerHTML = `<i>Calculating ID...</i>`;
+                    
+                    try {
+                        // Wait for the asynchronous hashing function to complete
+                        const hashedParticipantId = await sha256(answer);
+
+                        // 3. Update the content with the SHA-256 hash (64 characters long)
+                        outputElement.textContent = `Your Participant ID is: ${
+                            hashedParticipantId.substring(2, 6).toUpperCase() + "-" + hashedParticipantId.substring(10, 14).toUpperCase()
+                        }`;
+                    } catch (e) {
+                        outputElement.textContent = "Error calculating hash. Ensure your browser supports the Web Crypto API.";
+                        console.error("SHA-256 Hashing Error:", e);
+                    }
+                } else {
+                    outputElement.textContent = "Please provide answers to both questions.";
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <header>
+            <h1 class='cap'>Generate a Participant ID</h1>
+        </header>
+        <br>
+        <form onsubmit="event.preventDefault(); displayResult()">
+            <label for="question-1">What are the <b>fourth</b> and <b>sixth</b> letters of your favorite snack?</label><br>
+            <input type="text" id="question-1" name="answer1" required><br>
+            
+            <label for="question-2">What are the <b>first</b> and <b>third</b> letters of your favorite film?</label><br>
+            <input type="text" id="question-2" name="answer2" required><br><br>
+            
+            <button type="submit">Generate ID</button>
+        </form>
+
+        <p id="output">
+            Your unique Participant ID will appear here after you submit the form.
+        </p>
+    </body>
+</html>
